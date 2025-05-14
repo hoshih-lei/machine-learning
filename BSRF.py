@@ -139,7 +139,7 @@ st.markdown("""
 Show the contribution of features to the prediction results.
 """)
 fig1, ax1 = plt.subplots(figsize=(10, 6))
-shap.plots.bar(data['shap_values'], max_display=15, show=False)
+shap.plots.beeswarm(data['shap_values'], max_display=7, show=False)
 st.pyplot(fig1)
 
 st.subheader("Individual Prediction Explanation")
