@@ -19,7 +19,7 @@ def load_and_train():
     data = pd.read_csv('dataSRF.csv', header=0)
     X = data.drop('LR', axis=1)
     y = data['LR']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
 
     numerical_features = ['T', 't', 'ph-M', 'E-M', 'BET', 'ph-S', 'CEC', 'TOC', 'E-S', 'V']
     categorical_features = ['RMC', 'FPM', 'E']
