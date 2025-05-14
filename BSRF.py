@@ -14,16 +14,13 @@ from sklearn.metrics import mean_squared_error, r2_score
 import lightgbm as lgb
 import shap
 
-# 缓存资源避免重复计算
 @st.cache_resource
 def load_and_train():
-    # 读取数据
     data = pd.read_csv('dataSRF.csv', header=0)
     X = data.drop('LR', axis=1)
     y = data['LR']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # 定义预处理流程
     numerical_features = ['T', 't', 'ph-M', 'E-M', 'BET', 'ph-S', 'CEC', 'TOC', 'E-S', 'V']
     categorical_features = ['RMC', 'FPM', 'E']
 
@@ -33,7 +30,6 @@ def load_and_train():
             ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
         ], verbose_feature_names_out=False)
 
-    # 使用优化后的最佳参数
     best_params = {
         'n_estimators': 437,
         'learning_rate': 0.22648248189516848,
@@ -53,12 +49,10 @@ def load_and_train():
     ])
     final_model.fit(X_train, y_train)
 
-    # 计算评估指标
     y_pred = final_model.predict(X_test)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
 
-    # 准备SHAP解释器
     preprocessor = final_model.named_steps['preprocessor']
     X_train_preprocessed = pd.DataFrame(
         preprocessor.transform(X_train),
@@ -87,15 +81,12 @@ def load_and_train():
         }
     }
 
-# 加载模型和数据
 data = load_and_train()
 
-# 输入侧边栏
 with st.sidebar:
     st.header("Input Features")
     inputs = {}
     
-    # 数值型特征输入（带单位和范围）
     num_features = [
         ('T', '°C'), ('t', 'h'), ('ph-M', ''), ('E-M', 'g/kg'),
         ('BET', 'm²/g'), ('ph-S', ''), ('CEC', 'cmol/kg'),
@@ -118,36 +109,31 @@ with st.sidebar:
             format="%.1f"
         )
     
-    # 类别型特征输入
     inputs['RMC'] = st.selectbox('RMC', options=data['categories']['RMC'])
     inputs['FPM'] = st.selectbox('FPM', options=data['categories']['FPM'])
     inputs['E'] = st.selectbox('E', options=data['categories']['E'])
 
-# 预测功能
 if st.sidebar.button('Predict'):
     input_df = pd.DataFrame([inputs])
     prediction = data['model'].predict(input_df)[0]
     st.success(f"Predicted Release Rate (LR): {prediction:.2f}%")
 
-# 主界面显示评估指标
 st.header("Model Performance")
 col1, col2 = st.columns(2)
 with col1:
     st.metric("Root Mean Squared Error (RMSE)", 
              f"{data['rmse']:.4f}",
-             help="衡量模型预测值与实际值之间的差异")
+             help="Measure the difference between the predicted value of the model and the actual value")
 with col2:
     st.metric("R-squared (R²)", 
              f"{data['r2']:.4f}",
-             help="解释变量对目标变量的可解释比例")
+             help="Explanatory ratio of explanatory variable to target variable")
 
-# SHAP可视化
 st.header("Model Interpretation")
 st.markdown("""
 ### SHAP (SHapley Additive exPlanations)
 """)
 
-# 特征重要性
 st.subheader("Global Feature Importance")
 st.markdown("""
 Show the contribution of features to the prediction results.
@@ -156,7 +142,6 @@ fig1, ax1 = plt.subplots(figsize=(10, 6))
 shap.plots.bar(data['shap_values'], max_display=15, show=False)
 st.pyplot(fig1)
 
-# 决策图（可交互选择样本）
 st.subheader("Individual Prediction Explanation")
 st.markdown("""
 Decision diagrams show how each feature pushes the predicted value from the baseline to the final result.
