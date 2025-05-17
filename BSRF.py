@@ -113,10 +113,12 @@ with st.sidebar:
     inputs['FPM'] = st.selectbox('FPM', options=data['categories']['FPM'])
     inputs['E'] = st.selectbox('E', options=data['categories']['E'])
 
+result_placeholder = st.empty()
+
 if st.sidebar.button('Predict'):
     input_df = pd.DataFrame([inputs])
     prediction = data['model'].predict(input_df)[0]
-    st.success(f"Predicted Release Rate (LR): {prediction:.2f}%")
+    result_placeholder.success(f"**Predicted Release Rate (LR): {prediction:.2f}%**")
 
 st.header("Model Performance")
 col1, col2 = st.columns(2)
@@ -130,26 +132,15 @@ with col2:
              help="Explanatory ratio of explanatory variable to target variable")
 
 st.header("Model Interpretation")
+st.subheader("SHAP Decision Plot")
 st.markdown("""
-### SHAP (SHapley Additive exPlanations)
+Decision plots show how each feature pushes the predicted value from the baseline to the final result.
 """)
 
-st.subheader("Global Feature Importance")
-st.markdown("""
-Show the contribution of features to the prediction results.
-""")
-fig1, ax1 = plt.subplots(figsize=(10, 6))
-shap.plots.beeswarm(data['shap_values'], max_display=7, show=False)
-st.pyplot(fig1)
-
-st.subheader("Individual Prediction Explanation")
-st.markdown("""
-Decision diagrams show how each feature pushes the predicted value from the baseline to the final result.
-""")
 sample_id = st.selectbox("Select sample to explain", 
                         options=range(len(data['X_test'])),
                         format_func=lambda x: f"Sample {x+1}")
-fig2, ax2 = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(10, 6))
 shap.decision_plot(
     data['explainer'].expected_value,
     data['shap_values'].values[sample_id],
@@ -157,4 +148,4 @@ shap.decision_plot(
     feature_names=data['feature_names'],
     show=False
 )
-st.pyplot(fig2)
+st.pyplot(fig)
